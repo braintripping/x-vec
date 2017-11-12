@@ -1,0 +1,13 @@
+{:dependencies []
+ :source-paths ["src/main"
+                "src/graphql"
+                "src/hiccup"
+                "src/test"]
+
+ :builds       {:test {:target     :browser
+                       :modules    {:base {:entries [x-vec.core-tests]}}
+                       :output-dir "docs/js/compiled"
+                       :asset-path "/js/compiled"
+                       :devtools   {:http-root    "docs"
+                                    :http-handler shadow.http.push-state/handle
+                                    :http-port    8710}}}}
