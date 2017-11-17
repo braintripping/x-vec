@@ -2,12 +2,25 @@
  :source-paths ["src/main"
                 "src/graphql"
                 "src/hiccup"
-                "src/test"]
+                "src/test"
+                "src/doc"]
 
- :builds       {:test {:target     :browser
-                       :modules    {:base {:entries [x-vec.core-tests]}}
-                       :output-dir "docs/js/compiled"
-                       :asset-path "/js/compiled"
-                       :devtools   {:http-root    "docs"
-                                    :http-handler shadow.http.push-state/handle
-                                    :http-port    8710}}}}
+ :builds       {:test      {:target     :browser
+                            :modules    {:base {:entries [x-vec.core-tests]}}
+                            :output-dir "public/js/compiled"
+                            :asset-path "/js/compiled"
+                            :devtools   {:http-root    "docs"
+                                         :http-handler shadow.http.push-state/handle
+                                         :http-port    8710}}
+                :bootstrap {:target     :bootstrap
+                            :entries    [x-vec.graphql]
+                            :output-dir "public/js/compiled/bootstrap"}
+                :browser   {:target           :browser
+                            :compiler-options {:optimizations :simple}
+                            :modules          {:base {:entries [x-vec.graphql-doc]}}
+                            :output-dir       "public/js/compiled"
+                            :asset-path       "/js/compiled"
+                            :devtools         {:http-root    "public"
+                                               :http-handler shadow.http.push-state/handle
+                                               :after-load   x-vec.graphql-doc/render
+                                               :http-port    8701}}}}

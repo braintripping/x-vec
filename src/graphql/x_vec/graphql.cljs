@@ -3,7 +3,7 @@
   (:require [x-vec.core :as x]
             [clojure.string :as string]
             [clojure.set :as set])
-  (:require-macros [x-vec.graphql :as g :refer [defquery]]))
+  (:require-macros [x-vec.graphql :as g :refer [defquery query]]))
 
 (defonce defs (atom {}))
 (def ^:dynamic *query-deps*
@@ -66,9 +66,20 @@
     (swap! *query-deps* update :gql/var conj var-name)
     var-name))
 
+(defmethod emit-vec :...
+  [_ props children]
+  ((get-method emit-vec :default)
+    :... (set/rename-keys props {:on :gql/on}) children))
+
+(defn vec-wrap [x]
+  (cond (keyword? x) [x {}]
+        (and (vector? x) (not (map? (second x))))
+        (into [(first x) {}] (rest x))
+        :else x))
+
 (defmethod emit-vec :default
-  [tag {:keys [gql/alias-of gql/kind gql/on gql/directives] :as props} children]
-  (str (when kind (str (name kind) " "))
+  [tag {:keys [gql/alias-of gql/operation gql/on gql/directives] :as props} children]
+  (str (when operation (str (name operation) " "))
        (name tag)
        (when on (str " on " (name on)))
        (apply str (for [[directive directive-props] directives]
@@ -111,26 +122,48 @@
        :fragments fragments-string
        :string    (str query-string fragments-string)})))
 
+(defn directive [name props body]
+  (update (vec-wrap body) 1 assoc-in [:gql/directives name] props))
+
+(println (:query (query someQuery [$el :String]
+                        [:me
+                         (directive :include {:if $el}
+                                    [:... :name])])))
+
+
+;; TODO
+;;
+;; - `query` should return a function, which expects
+;;   values for its arguments, which are put into a
+;;   variables map.  Then we can really get the whole
+;;   query string.
+;; - memoize the intermediate stuff inside `query` et al
+;;   so that we can call a given query multiple times
+;;   without further string mashing.
+;; - `query` could be a `defrecord` that implements `iFn`
+;;   so that we can use (:fragments theQuery) and also
+;;   call it to get the complete string: (theQuery {:the "args"})
+;; - test mutations
+;; - input data types (with a !)
+;; - `__typename` http://graphql.org/learn/queries/
+;;
+;; Object types and fields
+;; - use ! for non-nullable
+;; - array notation http://graphql.org/learn/schema/#object-types-and-fields
+
+
+
 (comment
 
   ;; maybe include - alternate directive syntax
 
-  (defn vec-wrap [x]
-    (cond (keyword? x) [x {}]
-          (and (vector? x) (not (map? (second x))))
-          (into [(first x) {}] (rest x))
-          :else x))
+
 
   (comment
     (= (vec-wrap :x) [:x {}])
     (= (vec-wrap [:x]) [:x {}])
     (= (vec-wrap [:x :y]) [:x {} :y]))
 
-  (defn skip-when [pred form]
-    (update (vec-wrap form) 1 assoc-in [:gql/directives :include :if] pred))
-
-  (defn include-when [pred form]
-    (update (vec-wrap form) 1 assoc-in [:gql/directives :include :if] pred))
 
   ;; usage
   (skip-when $someVar

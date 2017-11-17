@@ -6,6 +6,7 @@
   :source-paths ["src/main"
                  "src/hiccup"
                  "src/graphql"
-                 "src/test"]
+                 "src/test"
+                 "src/doc"]
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.946"]])

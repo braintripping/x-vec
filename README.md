@@ -1,13 +1,10 @@
 ## X-Expressions in Clojure, with vectors
 
-
-
-
 ### Background
 
-The most popular format for specifying HTML in Clojure is [Hiccup](https://github.com/weavejester/hiccup), by [James Reeves](https://www.booleanknot.com/). It has spawned some variants, the most popular being [sablono](https://github.com/r0man/sablono) and [reagent](https://github.com/reagent-project/reagent) (which also does much more), both of which return React components rather than HTML strings.
+The most popular format for specifying HTML in Clojure is [Hiccup](https://github.com/weavejester/hiccup), by [James Reeves](https://www.booleanknot.com/). It has spawned variants like [sablono](https://github.com/r0man/sablono) and [reagent](https://github.com/reagent-project/reagent) which return React components rather than HTML strings.
 
-In the summer of 2017 I read Matthew Butterick's explanation of [X-Expressions](http://docs.racket-lang.org/pollen/second-tutorial.html#%28part._.X-expressions%29), and then discovered the X-Expression [paper](https://www.cs.colorado.edu/~ralex/papers/PDF/X-expressions.pdf) and some additional [references](https://i.imgur.com/LxiNuEq.png) from Jack Rusher. This changed my intuition about `hiccup`, from "a way to generate HTML in Clojure" to "an implementation of X-Expressions in Clojure using vectors".
+This summer I read Matthew Butterick's explanation of [X-Expressions](http://docs.racket-lang.org/pollen/second-tutorial.html#%28part._.X-expressions%29), then discovered a related [paper](https://www.cs.colorado.edu/~ralex/papers/PDF/X-expressions.pdf) and additional [references](https://i.imgur.com/LxiNuEq.png) via Jack Rusher. My intuition about what `hiccup` is began to shift from "a way to generate HTML in Clojure" to "an implementation of X-Expressions in Clojure using vectors".
 
 This library, `x-vec`, is a small toolset for building 'emitters' that output different kinds of useful things from X-Vector notation. For example:
 
@@ -15,7 +12,7 @@ This library, `x-vec`, is a small toolset for building 'emitters' that output di
 - GraphQL queries
 - Code ASTs
 
-I had previously written my own [hiccup variant](https://github.com/braintripping/re-view/blob/master/re_view/hiccup.md) as well as a proof-of-concept graphql query generator, so I've started by copying that code into this repo.
+Having previously written a [hiccup variant](https://github.com/braintripping/re-view/blob/master/re_view/hiccup.md) myself, I used that code as well as some prior drafts for a graphql emitter as the starting point for this repo.
 
 ----
 

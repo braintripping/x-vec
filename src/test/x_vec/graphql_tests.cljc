@@ -10,7 +10,7 @@
 
 (deftest xvec-graphql
 
-  (testing "graphql-emit"
+  (testing "fields and parameters"
 
     (are [in out]
       (= (emit in) (trim out))
@@ -23,16 +23,23 @@
 
       [:user {:id 4} :name
        [:parent {:id 5} :name]]
-      "user(id: 4) { name parent(id: 5) { name } }")
+      "user(id: 4) { name parent(id: 5) { name } }"))
 
 
-    ;; g/query
+  (testing "operations (query, mutation, operation)"
+    (g/defquery MyQuery [$some :Boolean]
+      :user
+      :id)
     (is (= (trim (:string (query MyQuery [$some :Boolean]
                                  :user
                                  :id)))
-           "query MyQuery($some: Boolean) { user id }"))
+           (trim (:string MyQuery))
+           (trim (:string (g/operation :query MyQuery [$some :Boolean] :user :id)))
+           "query MyQuery($some: Boolean) { user id }")))
 
-    ;; aliases
+
+
+  (testing "aliases"
     (is (= (emit [:user {:id 4}
                   [:smallPic {:gql/alias-of :profilePic
                               :size         1024}]])
@@ -40,9 +47,9 @@
 
     (is (= (emit [:zuck {:gql/alias-of :user
                          :id           4} :id :name])
-           "zuck: user(id: 4) { id name }"))
+           "zuck: user(id: 4) { id name }")))
 
-    ;; fragments
+  (testing "fragments"
     (g/deffragment friend-fields {:on :SomeType}
       :name :id)
 
@@ -100,53 +107,58 @@
                     likers {
                       count
                     }
-                  }")))))
+                  }"))))
+
+  (testing "directives"
+
+    (g/defquery inlineFragmentNoType [$expandedInfo :Boolean]
+      [:user
+       :name
+       ;; in props
+       [:... {:gql/directives {:include {:if :$expandedInfo}}}
+        :birthday]])
+    (g/defquery inlineFragmentNoTypeDirective [$expandedInfo :Boolean]
+      [:user
+       :name
+       ;; with function
+       (g/directive :include {:if $expandedInfo}
+                    [:... :birthday])])
+
+    (is (= (trim (:query inlineFragmentNoTypeDirective))
+           (trim (:query inlineFragmentNoType))
+           (trim "query inlineFragmentNoTypeDirective($expandedInfo: Boolean) {
+                    user {
+                      name
+                      ... @include(if: $expandedInfo) {
+                        birthday
+                      }
+                    }
+                  }")))
 
 
+    (g/defquery inlineFragmentTyping []
+              [:profiles {:handles ["zuck" "cocacola"]}
+               :handle
+               [:... {:on :User}
+                [:likers :count]]
+               [:... {:on :Page}
+                [:likers :count]]])
 
-(comment
-  (defquery inlineFragmentNoType [$expandedInfo :Boolean]
-            [:user {:handle "zuck"}
-             :id
-             :name
-             (fragment {:gql/directives {:include {:if :$expandedInfo}}}
-                       :firstName
-                       :lastName
-                       :birthday)])
-  (defquery skipDirective [$someTest :Boolean]
-            [:experimentalField-1 {:gql/directives {:skip    {:if :$someTest}
-                                                    :include {:if :$otherTest}}}]
-            [:experimentalField-2 {:gql/directives {:include {:if :$someTest}}}])
-  (defquery customDirective []
-            [:search {:text "cat"}
-             :text
-             [:id {:gql/directives {:instrument {:tag "search.id"}}}]])
-  (println
-    inlineFragmentNoType
-    \newline
-    skipDirective
-    \newline
-    customDirective))
+    (is (= (trim (:query inlineFragmentTyping))
+           (trim "query inlineFragmentTyping {
+                    profiles(handles: [\"zuck\", \"cocacola\"]) {
+                      handle
+                      ... on User {
+                        likers {
+                          count
+                        }
+                      }
+                      ... on Page {
+                        likers {
+                          count
+                        }
+                      }
+                    }
+                  }")))
 
-(comment
-  (defquery inlineFragmentTyping []
-            [:profiles {:handles ["zuck" "cocacola"]}
-             :handle
-             (fragment {:on :User}
-                       [:likers :count])
-             (fragment {:on :Page}
-                       [:likers :count])
-             ])
-  (println inlineFragmentTyping))
-
-(comment
-  (g/deffragment user-fields {:on :User}
-    [:friends :count])
-  (g/deffragment page-fields {:on :Page}
-    [:likers :count])
-  (g/defquery FragmentTyping []
-    [:profiles {:handles ["zuck", "cocacola"]}
-     :handle
-     user-fields
-     page-fields])
-  (prn FragmentTyping))
+    (println (:query inlineFragmentTyping))))
