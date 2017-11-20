@@ -6,6 +6,7 @@
   (:require-macros [x-vec.graphql :as g :refer [defquery query]]))
 
 (defonce defs (atom {}))
+
 (def ^:dynamic *query-deps*
   "Track fragments for a query."
   nil)
@@ -125,24 +126,25 @@
 (defn directive [name props body]
   (update (vec-wrap body) 1 assoc-in [:gql/directives name] props))
 
-(println (:query (query someQuery [$el :String]
-                        [:me
-                         (directive :include {:if $el}
-                                    [:... :name])])))
+(comment
+  (println (:query (query someQuery [$el :String]
+                          [:me
+                           (directive :include {:if $el}
+                                      [:... :name])]))))
 
 
 ;; TODO
 ;;
-;; - `query` should return a function, which expects
+;; - `query` could return a function, which expects
 ;;   values for its arguments, which are put into a
 ;;   variables map.  Then we can really get the whole
 ;;   query string.
 ;; - memoize the intermediate stuff inside `query` et al
 ;;   so that we can call a given query multiple times
-;;   without further string mashing.
+;;   without further string mashing?
 ;; - `query` could be a `defrecord` that implements `iFn`
 ;;   so that we can use (:fragments theQuery) and also
-;;   call it to get the complete string: (theQuery {:the "args"})
+;;   call it to get the complete string: (theQuery {:the "args"})?
 ;; - test mutations
 ;; - input data types (with a !)
 ;; - `__typename` http://graphql.org/learn/queries/

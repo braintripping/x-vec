@@ -1,4 +1,4 @@
-(defproject braintripping/x-vec "0.1.0"
+(defproject braintripping/x-vec "0.1.0-SNAPSHOT"
   :description "X-Expressions in Clojure"
   :url "https://www.github.com/braintripping/x-vec"
   :license {:name "Eclipse Public License"

@@ -22,7 +22,7 @@
                               (into bindings [name `(quote [:gql/var {:gql/name ~name}])])) [] argmap)]
     `(let ~bindings
        (~'x-vec.graphql/emit
-         (into [~(name the-name)
+         (into [~(munge (name the-name))
                 (assoc (quote ~argmap) :gql/operation ~kind)] ~(vec body))))))
 
 (defmacro query [the-name arglist & body]
