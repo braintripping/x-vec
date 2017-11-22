@@ -9,31 +9,6 @@
             [clojure.string :as string]))
 
 ;; npx shadow-cljs watch doc-bootstrap doc
-;# X-Vec: GraphQL
-;
-;Simple query:
-;
-;```clj
-;[:user :name]
-;```
-;
-;    With parameter:
-;
-;
-;```clj
-;[:user {:id 4} :name]
-;```
-;
-;    Multiple fields:
-;
-;```clj
-;[:user {:id 4} :id :name]
-;```
-;
-;
-;    ```clj
-;[:user {:id 4} :id :name]
-;```
 
 (defonce c-state (cljs/empty-state))
 (defonce eval-ready? false)

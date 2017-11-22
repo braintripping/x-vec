@@ -159,6 +159,4 @@
                         }
                       }
                     }
-                  }")))
-
-    (println (:query inlineFragmentTyping))))
+                  }")))))

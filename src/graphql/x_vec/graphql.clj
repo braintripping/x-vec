@@ -19,7 +19,7 @@
 (defmacro operation [kind the-name arglist & body]
   (let [argmap (apply hash-map arglist)
         bindings (reduce-kv (fn [bindings name _]
-                              (into bindings [name `(quote [:gql/var {:gql/name ~name}])])) [] argmap)]
+                              (into bindings [name `(quote [:gql/var {:gql/name ~(str name)}])])) [] argmap)]
     `(let ~bindings
        (~'x-vec.graphql/emit
          (into [~(munge (name the-name))

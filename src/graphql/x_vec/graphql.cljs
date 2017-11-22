@@ -78,6 +78,11 @@
         (into [(first x) {}] (rest x))
         :else x))
 
+(comment
+  (= (vec-wrap :x) [:x {}])
+  (= (vec-wrap [:x]) [:x {}])
+  (= (vec-wrap [:x :y]) [:x {} :y]))
+
 (defmethod emit-vec :default
   [tag {:keys [gql/alias-of gql/operation gql/on gql/directives] :as props} children]
   (str (when operation (str (name operation) " "))
@@ -99,29 +104,39 @@
                 (throw (js/Error. (str "Not a keyword or number: " x ", " (type x)))))))
 
 (defn emit*
-  ([form] (emit* 0 form))
+  ([form]
+   (emit* 0 form))
   ([depth form]
    (x/emit {:emit-vec    emit-vec
             :parse-tag   identity
             :emit-list   identity
             :emit-nonvec emit-nonvec} form)))
 
-(defn emit [form]
-  (binding [*query-deps* (or *query-deps*
-                             (atom {:gql/fragment #{}
-                                    :gql/var      #{}}))]
-    (let [query-string (emit* form)
-          {variables :gql/var
-           fragments :gql/fragment} @*query-deps*
-          defs @defs
-          fragments-string (->> (for [name fragments
-                                      :let [form (get-in defs [:gql/fragment name])]]
-                                  (str "\n\n" (emit* form)))
-                                (apply str))]
-      {:query     query-string
-       :variables variables
-       :fragments fragments-string
-       :string    (str query-string fragments-string)})))
+(defrecord Query [query
+                  fragments
+                  query-string
+                  fragments-string
+                  string
+                  required-variables]
+  Object
+  (toString [this] string))
+
+(def emit
+  (memoize (fn [form]
+             (binding [*query-deps* (or *query-deps*
+                                        (atom {:gql/fragment #{}
+                                               :gql/var      #{}}))]
+               (let [query-string (emit* form)
+                     {variables :gql/var
+                      fragments :gql/fragment} @*query-deps*
+                     defs @defs
+                     fragments (mapv (fn [name] (get-in defs [:gql/fragment name])) fragments)
+                     fragments-string (->> (for [fragment fragments]
+                                             (str "\n\n" (emit* fragment)))
+                                           (apply str))
+                     whole-string (str query-string fragments-string)]
+                 (->Query form fragments query-string fragments-string whole-string variables))))))
+
 
 (defn directive [name props body]
   (update (vec-wrap body) 1 assoc-in [:gql/directives name] props))
@@ -132,45 +147,9 @@
                            (directive :include {:if $el}
                                       [:... :name])]))))
 
-
 ;; TODO
 ;;
-;; - `query` could return a function, which expects
-;;   values for its arguments, which are put into a
-;;   variables map.  Then we can really get the whole
-;;   query string.
-;; - memoize the intermediate stuff inside `query` et al
-;;   so that we can call a given query multiple times
-;;   without further string mashing?
-;; - `query` could be a `defrecord` that implements `iFn`
-;;   so that we can use (:fragments theQuery) and also
-;;   call it to get the complete string: (theQuery {:the "args"})?
 ;; - test mutations
-;; - input data types (with a !)
+;; - test input data types (with a ! for non-nullable)
 ;; - `__typename` http://graphql.org/learn/queries/
-;;
-;; Object types and fields
-;; - use ! for non-nullable
 ;; - array notation http://graphql.org/learn/schema/#object-types-and-fields
-
-
-
-(comment
-
-  ;; maybe include - alternate directive syntax
-
-
-
-  (comment
-    (= (vec-wrap :x) [:x {}])
-    (= (vec-wrap [:x]) [:x {}])
-    (= (vec-wrap [:x :y]) [:x {} :y]))
-
-
-  ;; usage
-  (skip-when $someVar
-             [:name {:id 0}])
-  (include-when $someVar
-                [:name {:id 0}])
-
-  )
